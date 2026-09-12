@@ -379,7 +379,7 @@ const fetchData = useCallback(async () => {
         <select
           value={selectedCategory}
           onChange={handleCategoryChange}
-          size={5}
+          size={1}
           className='w-full md:w-auto border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500'
         >
           <option value=''>Tất cả danh mục</option>
@@ -782,7 +782,7 @@ const fetchData = useCallback(async () => {
                 </label>
                 <select
                   required
-                  size={5}
+                  size={1}
                   className='w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:border-emerald-500 outline-none bg-white'
                   name='madanhmuc'
                 >
@@ -885,7 +885,7 @@ const fetchData = useCallback(async () => {
                   Danh mục *
                 </label>
                 <select
-                  size={5}
+                  size={1}
                   defaultValue={selectedProduct?.madanhmuc}
                   name='madanhmuc'
                   className='w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:border-blue-500 outline-none bg-white'
