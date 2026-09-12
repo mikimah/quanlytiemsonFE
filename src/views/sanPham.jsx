@@ -22,7 +22,7 @@ export default function SanPham() {
   const [mockCategories, setMockCategories] = useState([]);
   const [mockProducts, setMockProducts] = useState([]);
   const [mockPriceHistory, setMockPriceHistory] = useState([]);
-  const ITEMS_PER_PAGE = 10;
+  const ITEMS_PER_PAGE = 5;
 
   const fetchData = useCallback(async () => {
     setIsLoading(true);
