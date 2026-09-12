@@ -218,7 +218,7 @@ const fetchData = useCallback(async () => {
         const masanpham = responseSP.data.masanpham;
         const responseLS = await api.post("/lichsuthaydoi", {
           giasanpham: Number(e.target.giaban.value),
-          thoigian: new Date(),
+          thoigian: new Date().toISOString().slice(0, 19).replace('T', ' '),
           masanpham: masanpham,
         });
         setMockProducts((prev) => [
@@ -271,7 +271,7 @@ const fetchData = useCallback(async () => {
         );
         const responseLS = await api.post("/lichsuthaydoi", {
           giasanpham: Number(e.target.giaban.value),
-          thoigian: new Date(),
+          thoigian: new Date().toISOString().slice(0, 19).replace('T', ' '),
           masanpham: selectedProduct.masanpham,
         });
         console.log("responseSP:", responseSP.data);
