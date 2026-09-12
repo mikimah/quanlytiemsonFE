@@ -81,6 +81,38 @@ export default function DanhMuc() {
     return filteredCategories.slice(start, start + ITEMS_PER_PAGE);
   }, [filteredCategories, currentPage]);
 
+  // Tạo mảng số trang rút gọn với dấu ba chấm chống tràn
+  const paginationRange = useMemo(() => {
+    const delta = 1;
+    const range = [];
+    const rangeWithDots = [];
+    let prev;
+
+    for (let i = 1; i <= totalPages; i++) {
+      if (
+        i === 1 ||
+        i === totalPages ||
+        (i >= currentPage - delta && i <= currentPage + delta)
+      ) {
+        range.push(i);
+      }
+    }
+
+    for (let i of range) {
+      if (prev) {
+        if (i - prev === 2) {
+          rangeWithDots.push(prev + 1);
+        } else if (i - prev !== 1) {
+          rangeWithDots.push("...");
+        }
+      }
+      rangeWithDots.push(i);
+      prev = i;
+    }
+
+    return rangeWithDots;
+  }, [totalPages, currentPage]);
+
   // 3. Memoized Handlers
   const handleOpenEdit = useCallback((category) => {
     setSelectedCategory(category);
@@ -199,28 +231,19 @@ export default function DanhMuc() {
             <Plus size={18} />
             <span>Thêm Danh Mục</span>
           </button>
-          {/* Nút Load làm mới dữ liệu bên phải nút Add */}
           <button
             onClick={fetchData}
             disabled={isLoading}
             title='Làm mới dữ liệu'
             className='p-2.5 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 rounded-lg shadow-sm transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center'
           >
-            <RotateCw
-              disabled={isLoading}
-              size={18}
-              className='disabled:opacity-50 disabled:cursor-not-allowed'
-              onClick={() => {
-                fetchData();
-              }}
-            />
+            <RotateCw size={18} />
           </button>
         </div>
       </div>
 
-      {/* Bộ lọc: Tìm kiếm & Sắp xếp mới/cũ (Tự xuống dòng và full width trên mobile) */}
+      {/* Bộ lọc: Tìm kiếm & Sắp xếp mới/cũ */}
       <div className='bg-white p-3 sm:p-4 rounded-xl shadow-sm border border-gray-200 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 sm:gap-3'>
-        {/* Ô Tìm kiếm */}
         <div className='relative w-full sm:flex-1 sm:min-w-[240px]'>
           <Search
             className='absolute left-3 top-1/2 -translate-y-1/2 text-gray-400'
@@ -235,7 +258,6 @@ export default function DanhMuc() {
           />
         </div>
 
-        {/* Ô Sắp xếp theo cũ nhất / mới nhất */}
         <div className='relative w-full sm:w-auto'>
           <select
             value={sortOrder}
@@ -365,7 +387,7 @@ export default function DanhMuc() {
           </table>
         </div>
 
-        {/* Phân trang */}
+        {/* Phân trang (Đã tối ưu chống tràn cho Mobile & Desktop) */}
         <div className='border-t border-gray-200 p-3 sm:p-4 flex flex-col sm:flex-row items-center justify-between gap-3 bg-white rounded-b-xl'>
           <span className='text-xs sm:text-sm text-gray-500'>
             Hiển thị{" "}
@@ -384,22 +406,33 @@ export default function DanhMuc() {
             trên <b>{filteredCategories.length}</b> danh mục
           </span>
 
-          <div className='flex items-center gap-1'>
+          <div className='flex items-center gap-1 max-w-full overflow-x-auto py-1'>
             <button
               onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
               disabled={currentPage === 1}
-              className='p-1.5 sm:p-2 border border-gray-300 rounded-md disabled:opacity-30 hover:bg-gray-100 active:bg-gray-200'
+              className='p-1.5 sm:p-2 border border-gray-300 rounded-md disabled:opacity-30 hover:bg-gray-100 active:bg-gray-200 shrink-0'
             >
               <ChevronLeft size={16} />
             </button>
 
             <div className='flex items-center gap-1'>
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map(
-                (page) => (
+              {paginationRange.map((page, index) => {
+                if (page === "...") {
+                  return (
+                    <span
+                      key={`dots-${index}`}
+                      className='px-2 py-1 text-xs sm:text-sm text-gray-400 select-none'
+                    >
+                      ...
+                    </span>
+                  );
+                }
+
+                return (
                   <button
                     key={page}
                     onClick={() => handlePageChange(page)}
-                    className={`px-2.5 sm:px-3 py-1 sm:py-1.5 text-xs sm:text-sm rounded-md font-medium ${
+                    className={`px-2.5 sm:px-3 py-1 sm:py-1.5 text-xs sm:text-sm rounded-md font-medium shrink-0 transition-colors ${
                       currentPage === page
                         ? "bg-blue-600 text-white"
                         : "hover:bg-gray-100 text-gray-700"
@@ -407,8 +440,8 @@ export default function DanhMuc() {
                   >
                     {page}
                   </button>
-                ),
-              )}
+                );
+              })}
             </div>
 
             <button
@@ -416,7 +449,7 @@ export default function DanhMuc() {
                 handlePageChange(Math.min(totalPages, currentPage + 1))
               }
               disabled={currentPage === totalPages || totalPages === 0}
-              className='p-1.5 sm:p-2 border border-gray-300 rounded-md disabled:opacity-30 hover:bg-gray-100 active:bg-gray-200'
+              className='p-1.5 sm:p-2 border border-gray-300 rounded-md disabled:opacity-30 hover:bg-gray-100 active:bg-gray-200 shrink-0'
             >
               <ChevronRight size={16} />
             </button>

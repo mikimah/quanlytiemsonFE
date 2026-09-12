@@ -24,22 +24,22 @@ export default function SanPham() {
   const [mockPriceHistory, setMockPriceHistory] = useState([]);
   const ITEMS_PER_PAGE = 10;
 
-const fetchData = useCallback(async () => {
-  setIsLoading(true);
-  try {
-    const [categoriesResponse, productsResponse] = await Promise.all([
-      api.get("/danhmuc"),
-      api.get("/sanpham"),
-    ]);
-    setMockCategories(categoriesResponse.data);
-    setMockProducts(productsResponse.data);
-  } catch (error) {
-    showError("Lỗi khi tải dữ liệu");
-    console.error("Error fetching data:", error);
-  } finally {
-    setIsLoading(false);
-  }
-}, []); 
+  const fetchData = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const [categoriesResponse, productsResponse] = await Promise.all([
+        api.get("/danhmuc"),
+        api.get("/sanpham"),
+      ]);
+      setMockCategories(categoriesResponse.data);
+      setMockProducts(productsResponse.data);
+    } catch (error) {
+      showError("Lỗi khi tải dữ liệu");
+      console.error("Error fetching data:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
 
   const fetchHistory = useCallback(async (id) => {
     setIsGettingHistory(true);
@@ -52,7 +52,7 @@ const fetchData = useCallback(async () => {
     } finally {
       setIsGettingHistory(false);
     }
-  },[]);
+  }, []);
 
   function formatDate(isoString) {
     if (!isoString) return "";
@@ -70,10 +70,8 @@ const fetchData = useCallback(async () => {
     fetchData();
   }, [fetchData]);
 
-
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");
-  // 'price-asc', 'price-desc', 'newest', 'oldest'
   const [sortOrder, setSortOrder] = useState("newest");
   const [currentPage, setCurrentPage] = useState(1);
 
@@ -102,7 +100,6 @@ const fetchData = useCallback(async () => {
       result = result.filter((p) => p.madanhmuc === Number(selectedCategory));
     }
 
-    // Xử lý 4 tiêu chí sắp xếp
     result.sort((a, b) => {
       if (sortOrder === "price-asc") {
         return (Number(a.giaban) || 0) - (Number(b.giaban) || 0);
@@ -134,6 +131,38 @@ const fetchData = useCallback(async () => {
     return filteredAndSortedProducts.slice(start, start + ITEMS_PER_PAGE);
   }, [filteredAndSortedProducts, currentPage]);
 
+  // Tạo mảng số trang rút gọn với dấu ba chấm
+  const paginationRange = useMemo(() => {
+    const delta = 1;
+    const range = [];
+    const rangeWithDots = [];
+    let prev;
+
+    for (let i = 1; i <= totalPages; i++) {
+      if (
+        i === 1 ||
+        i === totalPages ||
+        (i >= currentPage - delta && i <= currentPage + delta)
+      ) {
+        range.push(i);
+      }
+    }
+
+    for (let i of range) {
+      if (prev) {
+        if (i - prev === 2) {
+          rangeWithDots.push(prev + 1);
+        } else if (i - prev !== 1) {
+          rangeWithDots.push("...");
+        }
+      }
+      rangeWithDots.push(i);
+      prev = i;
+    }
+
+    return rangeWithDots;
+  }, [totalPages, currentPage]);
+
   // Handlers
   const handleOpenEdit = useCallback((product) => {
     setSelectedProduct(product);
@@ -149,14 +178,8 @@ const fetchData = useCallback(async () => {
     setSelectedProduct(product);
     fetchHistory(product.masanpham);
     setIsOpenHistory(true);
-    console.log("Selected product for history:", product);
-    console.log(
-      "Price history for product:",
-      mockPriceHistory.filter((item) => item.masanpham == product.masanpham),
-    );
-  }, []);
+  }, [fetchHistory]);
 
-  // Handlers phóng to & đóng xem ảnh
   const handleOpenImage = useCallback((product) => {
     if (product?.anhsanpham) {
       setPreviewImage({
@@ -201,8 +224,9 @@ const fetchData = useCallback(async () => {
       try {
         let urlAnh = "";
         if (e.target.anhsanpham?.files?.[0]) {
-          const { status, url, public_id, message } = await upLoadImage(e.target.anhsanpham.files[0]);
-          console.log("Upload image response:", { status, url, public_id, message });
+          const { status, url, message } = await upLoadImage(
+            e.target.anhsanpham.files[0],
+          );
           if (status === 200) {
             urlAnh = url;
           } else {
@@ -218,7 +242,7 @@ const fetchData = useCallback(async () => {
         const masanpham = responseSP.data.masanpham;
         const responseLS = await api.post("/lichsuthaydoi", {
           giasanpham: Number(e.target.giaban.value),
-          thoigian: new Date().toISOString().slice(0, 19).replace('T', ' '),
+          thoigian: new Date().toISOString().slice(0, 19).replace("T", " "),
           masanpham: masanpham,
         });
         setMockProducts((prev) => [
@@ -251,7 +275,9 @@ const fetchData = useCallback(async () => {
       try {
         let urlAnh = "";
         if (e.target.anhsanpham?.files?.[0]) {
-          const { status, url, public_id, message } = await upLoadImage(e.target.anhsanpham.files[0]);
+          const { status, url, message } = await upLoadImage(
+            e.target.anhsanpham.files[0],
+          );
           if (status === 200) {
             urlAnh = url;
           } else {
@@ -271,10 +297,9 @@ const fetchData = useCallback(async () => {
         );
         const responseLS = await api.post("/lichsuthaydoi", {
           giasanpham: Number(e.target.giaban.value),
-          thoigian: new Date().toISOString().slice(0, 19).replace('T', ' '),
+          thoigian: new Date().toISOString().slice(0, 19).replace("T", " "),
           masanpham: selectedProduct.masanpham,
         });
-        console.log("responseSP:", responseSP.data);
         setMockProducts((prev) =>
           prev.map((p) =>
             p.masanpham === selectedProduct.masanpham
@@ -339,28 +364,19 @@ const fetchData = useCallback(async () => {
             <Plus size={18} />
             <span>Thêm Sản Phẩm</span>
           </button>
-          {/* Nút Load làm mới dữ liệu bên phải nút Add */}
           <button
             onClick={fetchData}
             disabled={isLoading}
             title='Làm mới dữ liệu'
             className='p-2.5 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 rounded-lg shadow-sm transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center'
           >
-            <RotateCw
-              disabled={isLoading}
-              size={18}
-              className='disabled:opacity-50 disabled:cursor-not-allowed'
-              onClick={() => {
-                fetchData();
-              }}
-            />
+            <RotateCw size={18} />
           </button>
         </div>
       </div>
 
-      {/* Bộ lọc: Mobile xếp chồng 3 hàng, Desktop nằm trên 1 hàng */}
+      {/* Bộ lọc */}
       <div className='bg-white p-3 sm:p-4 rounded-xl shadow-sm border border-gray-200 flex flex-col md:flex-row gap-2.5 sm:gap-3 items-stretch md:items-center justify-between'>
-        {/* 1. Ô Tìm kiếm (Mobile: full hàng 1) */}
         <div className='relative w-full md:flex-1 md:min-w-[220px]'>
           <Search
             className='absolute left-3 top-1/2 -translate-y-1/2 text-gray-400'
@@ -375,7 +391,6 @@ const fetchData = useCallback(async () => {
           />
         </div>
 
-        {/* 2. Lọc theo danh mục (Mobile: full hàng 2) */}
         <select
           value={selectedCategory}
           onChange={handleCategoryChange}
@@ -390,7 +405,6 @@ const fetchData = useCallback(async () => {
           ))}
         </select>
 
-        {/* 3. Lựa chọn sắp xếp (Mobile: full hàng 3) */}
         <div className='relative w-full md:w-auto'>
           <select
             value={sortOrder}
@@ -588,7 +602,7 @@ const fetchData = useCallback(async () => {
           </table>
         </div>
 
-        {/* Phân trang */}
+        {/* Phân trang (Đã tối ưu chống tràn cho Mobile & Desktop) */}
         <div className='border-t border-gray-200 p-3 sm:p-4 flex flex-col sm:flex-row items-center justify-between gap-3 bg-white rounded-b-xl'>
           <span className='text-xs sm:text-sm text-gray-500'>
             Hiển thị{" "}
@@ -607,22 +621,33 @@ const fetchData = useCallback(async () => {
             trên <b>{filteredAndSortedProducts.length}</b>
           </span>
 
-          <div className='flex items-center gap-1'>
+          <div className='flex items-center gap-1 max-w-full overflow-x-auto py-1'>
             <button
               onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
               disabled={currentPage === 1}
-              className='p-1.5 sm:p-2 border border-gray-300 rounded-md disabled:opacity-30 hover:bg-gray-100 active:bg-gray-200'
+              className='p-1.5 sm:p-2 border border-gray-300 rounded-md disabled:opacity-30 hover:bg-gray-100 active:bg-gray-200 shrink-0'
             >
               <ChevronLeft size={16} />
             </button>
 
             <div className='flex items-center gap-1'>
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map(
-                (page) => (
+              {paginationRange.map((page, index) => {
+                if (page === "...") {
+                  return (
+                    <span
+                      key={`dots-${index}`}
+                      className='px-2 py-1 text-xs sm:text-sm text-gray-400 select-none'
+                    >
+                      ...
+                    </span>
+                  );
+                }
+
+                return (
                   <button
                     key={page}
                     onClick={() => handlePageChange(page)}
-                    className={`px-2.5 sm:px-3 py-1 sm:py-1.5 text-xs sm:text-sm rounded-md font-medium ${
+                    className={`px-2.5 sm:px-3 py-1 sm:py-1.5 text-xs sm:text-sm rounded-md font-medium shrink-0 transition-colors ${
                       currentPage === page
                         ? "bg-blue-600 text-white"
                         : "hover:bg-gray-100 text-gray-700"
@@ -630,8 +655,8 @@ const fetchData = useCallback(async () => {
                   >
                     {page}
                   </button>
-                ),
-              )}
+                );
+              })}
             </div>
 
             <button
@@ -639,7 +664,7 @@ const fetchData = useCallback(async () => {
                 handlePageChange(Math.min(totalPages, currentPage + 1))
               }
               disabled={currentPage === totalPages || totalPages === 0}
-              className='p-1.5 sm:p-2 border border-gray-300 rounded-md disabled:opacity-30 hover:bg-gray-100 active:bg-gray-200'
+              className='p-1.5 sm:p-2 border border-gray-300 rounded-md disabled:opacity-30 hover:bg-gray-100 active:bg-gray-200 shrink-0'
             >
               <ChevronRight size={16} />
             </button>
